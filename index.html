@@ -3,162 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우리들의 공용 위키 메모장</title>
+    <title>우리들의 공용 위키 게시판</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; background: #f9f9f9; color: #333; line-height: 1.6; }
-        h1 { text-align: center; color: #111; margin-bottom: 5px; }
-        .sub-text { text-align: center; color: #666; margin-top: 0; margin-bottom: 25px; font-size: 14px; }
-        
-        /* 카드 스타일 컨테이너 */
-        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e1e4e6; }
-        
-        /* 상태 표시 및 시간 영역 */
-        .info-bar { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .time-text { font-weight: bold; color: #0969da; }
-
-        /* [보기 모드] 일반 텍스트 화면 */
-        #view-mode { min-height: 200px; white-space: pre-wrap; word-break: break-all; font-size: 16px; padding: 10px 0; }
-
-        /* [수정 모드] 텍스트 입력창 (처음엔 숨김) */
-        #edit-mode { display: none; }
-        textarea { width: 100%; height: 300px; padding: 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; resize: vertical; display: block; margin-bottom: 15px; font-family: inherit; }
-        
-        /* 버튼 공통 스타일 */
-        .btn { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        .btn-edit { background-color: #0969da; color: white; }
-        .btn-edit:hover { background-color: #0550ae; }
-        .btn-save { background-color: #2da44e; color: white; margin-bottom: 8px; }
-        .btn-save:hover { background-color: #2c974b; }
-        .btn-cancel { background-color: #bae1ff; color: #004487; }
-        .btn-cancel:hover { background-color: #a3d3fa; }
+        body { font-family: sans-serif; max-width: 700px; margin: 50px auto; padding: 0 20px; background: #fff; color: #333; line-height: 1.7; }
+        h1 { text-align: center; color: #111; margin-bottom: 5px; font-size: 28px; cursor: pointer; }
+        .sub-text { text-align: center; color: #666; margin-top: 0; margin-bottom: 40px; font-size: 14px; }
+        .info-bar { display: flex; justify-content: space-between; font-size: 13px; color: #888; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .view-section { display: none; }
+        .active { display: block; }
+        .post-item { padding: 15px 0; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .post-item:hover { background: #fafafa; }
+        .post-title { font-size: 17px; font-weight: bold; color: #222; }
+        .post-date { font-size: 13px; color: #888; }
+        .detail-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #111; }
+        .detail-content { min-height: 200px; white-space: pre-wrap; font-size: 16px; margin: 20px 0; color: #333; }
+        input[type="text"], input[type="password"], textarea { width: 100%; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; padding: 12px; margin-bottom: 15px; }
+        textarea { height: 250px; resize: vertical; }
+        .form-row { display: flex; gap: 10px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 15px; }
+        .btn { padding: 12px 20px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .btn-block { width: 100%; }
+        .btn-primary { background-color: #0969da; color: white; }
+        .btn-primary:hover { background-color: #0550ae; }
+        .btn-success { background-color: #2da44e; color: white; }
+        .btn-success:hover { background-color: #2c974b; }
+        .btn-danger { background-color: #cf222e; color: white; }
+        .btn-danger:hover { background-color: #a41721; }
+        .btn-secondary { background-color: #f1f3f5; color: #495057; }
+        .btn-secondary:hover { background-color: #e9ecef; }
     </style>
 </head>
 <body>
 
-    <h1>📝 공용 위키 메모장</h1>
-    <p class="sub-text">누구나 내용을 읽고 자유롭게 수정할 수 있는 공간입니다.</p>
+    <h1 onclick="showListView()">📝 공용 위키 게시판</h1>
+    <p class="sub-text">비밀번호를 설정하여 본인의 글을 보호할 수 있습니다.</p>
     
-    <div class="container">
-        <!-- 상단 정보 바 (상태 및 수정 시간) -->
-        <div class="info-bar">
-            <span id="status">데이터를 불러오는 중...</span>
-            <span>최종 수정: <span id="time-display" class="time-text">-</span></span>
+    <div class="info-bar">
+        <span id="status">데이터를 불러오는 중...</span>
+        <span id="count-display">글 0개</span>
+    </div>
+
+    <!-- 1. 목록 화면 -->
+    <div id="list-view" class="view-section active">
+        <div id="posts-list">등록된 글이 없습니다.</div>
+        <button class="btn btn-primary btn-block" style="margin-top: 20px;" onclick="showFormView(false)">✏️ 새 글 작성하기</button>
+    </div>
+
+    <!-- 2. 상세 화면 -->
+    <div id="detail-view" class="view-section">
+        <div id="detail-title" class="detail-title">제목</div>
+        <div id="detail-date" style="font-size:13px; color:#888;">날짜</div>
+        <div id="detail-content" class="detail-content">내용</div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="handleEditRequest()">수정</button>
+            <button class="btn btn-danger" onclick="handleDeleteRequest()">삭제</button>
+            <button class="btn btn-secondary" onclick="showListView()">목록으로</button>
         </div>
+    </div>
 
-        <!-- 1. 보기 모드 화면 -->
-        <div id="view-mode">데이터를 로드하고 있습니다...</div>
-
-        <!-- 2. 수정 모드 화면 (기본적으로 숨겨짐) -->
-        <div id="edit-mode">
-            <textarea id="memo-input" placeholder="여기에 내용을 작성하세요..."></textarea>
-            <button class="btn btn-save" onclick="saveMemo()">💾 변경사항 저장하기</button>
-            <button class="btn btn-cancel" onclick="switchMode(false)">취소</button>
+    <!-- 3. 입력 양식 화면 -->
+    <div id="form-view" class="view-section">
+        <h2 id="form-title" style="margin-top:0;">새 글 작성</h2>
+        <div class="form-row">
+            <input type="text" id="post-title-input" placeholder="제목을 입력하세요" style="flex: 2;">
+            <input type="password" id="post-pw-input" placeholder="비밀번호(4자리 이상)" style="flex: 1;">
         </div>
-
-        <!-- 보기 모드 전용 버튼 -->
-        <button id="btn-to-edit" class="btn btn-edit" onclick="switchMode(true)" style="display: none;">✏️ 내용 수정하기</button>
+        <textarea id="post-content-input" placeholder="내용을 작성하세요..."></textarea>
+        <div class="btn-group">
+            <button class="btn btn-success" onclick="savePost()">저장하기</button>
+            <button class="btn btn-secondary" onclick="cancelForm()">취소</button>
+        </div>
     </div>
 
     <script>
-        // ⚠️ 본인의 고유 jsonblob 주소로 다시 채워넣어 주세요!
+        // ⚠️ 본인의 고유 주소로 채워주세요
         const blobUrl = "https://jsonblob.com/api/jsonBlob/019fdc31-5060-7f34-b979-81727b3be093";
         
-        // [핵심 해결책] 서버에서 가져온 가공되지 않은 순수 텍스트 데이터를 임시 보관할 변수
-        let rawContent = "";
+        let db = { posts: [] }, currentPostId = null, isEditMode = false;  
 
-        const viewModeEl = document.getElementById('view-mode');
-        const editModeEl = document.getElementById('edit-mode');
-        const memoInputEl = document.getElementById('memo-input');
-        const btnToEditEl = document.getElementById('btn-to-edit');
-        const statusEl = document.getElementById('status');
-        const timeDisplayEl = document.getElementById('time-display');
+        function navigateTo(id) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
 
-        // 보기 모드 <-> 수정 모드 전환 함수
-        function switchMode(isEdit) {
-            if (isEdit) {
-                viewModeEl.style.display = 'none';
-                btnToEditEl.style.display = 'none';
-                editModeEl.style.display = 'block';
-                
-                // 화면의 글자가 아닌, 메모리에 보관해둔 원본(rawContent)을 수정창에 바로 매핑합니다.
-                memoInputEl.value = rawContent;
-                memoInputEl.focus();
-            } else {
-                viewModeEl.style.display = 'block';
-                btnToEditEl.style.display = 'block';
-                editModeEl.style.display = 'none';
+        function showListView() { navigateTo('list-view'); renderList(); }
+
+        function renderList() {
+            const listEl = document.getElementById('posts-list');
+            document.getElementById('count-display').innerText = `글 ${db.posts.length}개`;
+            if (db.posts.length === 0) {
+                listEl.innerHTML = "<p style='color:#888; text-align:center;'>등록된 글이 없습니다.</p>";
+                return;
             }
+            const sorted = [...db.posts].reverse();
+            listEl.innerHTML = sorted.map(p => `
+                <div class="post-item" onclick="showDetailView(${p.id})">
+                    <div class="post-title">${escapeHtml(p.title)}</div>
+                    <div class="post-date">${p.updatedAt.substring(0, 10)}</div>
+                </div>
+            `).join('');
         }
 
-        // 데이터 불러오기 (GET)
-        function loadMemo() {
-            fetch(blobUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error();
-                    return response.json();
-                })
-                .then(data => {
-                    // 원본 데이터를 안전하게 보관 (줄바꿈 \n 보존)
-                    rawContent = data.content || "";
-                    
-                    // 화면 표시 처리
-                    viewModeEl.innerText = rawContent || "작성된 내용이 없습니다.";
-                    timeDisplayEl.innerText = data.updatedAt || "기록 없음";
-                    statusEl.innerText = "조회 완료";
-                    btnToEditEl.style.display = 'block';
-                })
-                .catch(error => {
-                    statusEl.innerText = "불러오기 실패";
-                    viewModeEl.innerText = "데이터를 로드하지 못했습니다. 주소나 네트워크를 확인하세요.";
-                });
+        function showDetailView(id) {
+            currentPostId = id;
+            const p = db.posts.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('detail-title').innerText = p.title;
+            document.getElementById('detail-date').innerText = `최종 수정: ${p.updatedAt}`;
+            document.getElementById('detail-content').innerText = p.content;
+            navigateTo('detail-view');
         }
 
-        // 데이터 저장하기 (PUT)
-        function saveMemo() {
-            statusEl.innerText = "저장 중...";
-            
+        function showFormView(edit = false) {
+            isEditMode = edit;
+            const pwIn = document.getElementById('post-pw-input');
+            if (edit) {
+                document.getElementById('form-title').innerText = "글 수정하기";
+                const p = db.posts.find(x => x.id === currentPostId);
+                document.getElementById('post-title-input').value = p.title;
+                document.getElementById('post-content-input').value = p.content;
+                pwIn.style.display = 'none'; 
+            } else {
+                document.getElementById('form-title').innerText = "새 글 작성하기";
+                document.getElementById('post-title-input').value = "";
+                document.getElementById('post-content-input').value = "";
+                pwIn.value = ""; pwIn.style.display = 'block'; 
+            }
+            navigateTo('form-view');
+        }
+
+        function cancelForm() { if (isEditMode) showDetailView(currentPostId); else showListView(); }
+
+        function handleEditRequest() {
+            const p = db.posts.find(x => x.id === currentPostId);
+            if (!p) return;
+            const inputPw = prompt("수정 비밀번호를 입력하세요:");
+            if (inputPw === null) return;
+            if (inputPw === p.password) showFormView(true);
+            else alert("비밀번호가 일치하지 않습니다.");
+        }
+
+        function handleDeleteRequest() {
+            const p = db.posts.find(x => x.id === currentPostId);
+            if (!p) return;
+            const inputPw = prompt("삭제 비밀번호를 입력하세요:");
+            if (inputPw === null) return;
+            if (inputPw === p.password) {
+                if (confirm("정말 삭제하시겠습니까?")) {
+                    db.posts = db.posts.filter(x => x.id !== currentPostId);
+                    updateServer(true);
+                }
+            } else alert("비밀번호가 일치하지 않습니다.");
+        }
+
+        function loadBoard() {
+            fetch(blobUrl).then(res => res.json()).then(data => {
+                db = data.posts ? data : { posts: [] };
+                document.getElementById('status').innerText = "조회 완료";
+                showListView();
+            }).catch(() => { document.getElementById('status').innerText = "로드 실패"; });
+        }
+
+        function savePost() {
+            const t = document.getElementById('post-title-input').value.trim();
+            const c = document.getElementById('post-content-input').value;
+            const pw = document.getElementById('post-pw-input').value.trim();
+            if (!t) { alert("제목을 입력해 주세요."); return; }
+            if (!isEditMode && (!pw || pw.length < 4)) { alert("비밀번호를 4자리 이상 입력해 주세요."); return; }
             const now = new Date();
-            const timestamp = now.getFullYear() + '-' + 
-                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                String(now.getDate()).padStart(2, '0') + ' ' + 
-                String(now.getHours()).padStart(2, '0') + ':' + 
-                String(now.getMinutes()).padStart(2, '0') + ':' + 
-                String(now.getSeconds()).padStart(2, '0');
+            const ts = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            if (isEditMode) {
+                const p = db.posts.find(x => x.id === currentPostId);
+                if (p) { p.title = t; p.content = c; p.updatedAt = ts; }
+            } else {
+                const newId = db.posts.length > 0 ? Math.max(...db.posts.map(p => p.id)) + 1 : 1;
+                db.posts.push({ id: newId, title: t, content: c, password: pw, updatedAt: ts });
+                currentPostId = newId;
+            }
+            updateServer();
+        }
 
-            const payload = {
-                content: memoInputEl.value,
-                updatedAt: timestamp
-            };
-
+        // [수정 완료된 서버 저장 함수]
+        function updateServer(isDel = false) {
+            document.getElementById('status').innerText = "저장 중...";
             fetch(blobUrl, {
                 method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if(response.ok) {
-                    statusEl.innerText = "저장 성공!";
-                    
-                    // 저장 성공 시 보관 중이던 원본 데이터 변수도 함께 갱신해 줍니다.
-                    rawContent = payload.content;
-                    
-                    viewModeEl.innerText = rawContent || "작성된 내용이 없습니다.";
-                    timeDisplayEl.innerText = payload.updatedAt;
-                    switchMode(false);
-                } else {
-                    statusEl.innerText = "저장 실패";
-                }
-            })
-            .catch(error => {
-                statusEl.innerText = "네트워크 오류";
-                console.error(error);
-            });
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(db)
+            }).then(res => {
+                if (res.ok) {
+                    document.getElementById('status').innerText = "저장 성공";
+                    if (isDel) showListView(); else showDetailView(currentPostId);
+                } else alert("서버 저장 실패");
+            }).catch(err => console.error(err));
         }
 
-        window.onload = loadMemo;
+        // [🛠️ 버그 수정 완료된 보안 함수]
+        function escapeHtml(text) { 
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;"); 
+        }
+
+        // 페이지 로드 시 게시판 데이터 불러오기 실행
+        window.onload = loadBoard;
     </script>
 </body>
 </html>
