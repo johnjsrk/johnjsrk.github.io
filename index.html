@@ -3,225 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>비밀 위키 게시판</title>
+    <title>Firebase 익명 게시판</title>
     <style>
-        /* 처음 접속 시 인증 전까지 화면을 숨기기 위한 기본 처리 */
-        body { font-family: sans-serif; max-width: 700px; margin: 50px auto; padding: 0 20px; background: #fff; color: #333; line-height: 1.7; display: none; }
-        h1 { text-align: center; color: #111; margin-bottom: 5px; font-size: 28px; cursor: pointer; }
-        .sub-text { text-align: center; color: #666; margin-top: 0; margin-bottom: 40px; font-size: 14px; }
-        .info-bar { display: flex; justify-content: space-between; font-size: 13px; color: #888; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-        .view-section { display: none; }
-        .active { display: block; }
-        .post-item { padding: 15px 0; border-bottom: 1px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .post-item:hover { background: #fafafa; }
-        .post-title { font-size: 17px; font-weight: bold; color: #222; }
-        .post-date { font-size: 13px; color: #888; }
-        .detail-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #111; }
-        .detail-content { min-height: 200px; white-space: pre-wrap; font-size: 16px; margin: 20px 0; color: #333; }
-        input[type="text"], input[type="password"], textarea { width: 100%; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; padding: 12px; margin-bottom: 15px; }
-        textarea { height: 250px; resize: vertical; }
-        .form-row { display: flex; gap: 10px; }
-        .btn-group { display: flex; gap: 8px; margin-top: 15px; }
-        .btn { padding: 12px 20px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        .btn-block { width: 100%; }
-        .btn-primary { background-color: #0969da; color: white; }
-        .btn-primary:hover { background-color: #0550ae; }
-        .btn-success { background-color: #2da44e; color: white; }
-        .btn-success:hover { background-color: #2c974b; }
-        .btn-danger { background-color: #cf222e; color: white; }
-        .btn-danger:hover { background-color: #a41721; }
-        .btn-secondary { background-color: #f1f3f5; color: #495057; }
-        .btn-secondary:hover { background-color: #e9ecef; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 30px auto; padding: 0 20px; color: #333; line-height: 1.6; }
+        h2 { border-bottom: 2px solid #2ea44f; padding-bottom: 10px; }
+        .form-box { background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e1e4e8; margin-bottom: 30px; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        button { background: #2ea44f; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 14px; }
+        button:hover { background: #2c974b; }
+        .post { border: 1px solid #e1e4e8; border-radius: 6px; padding: 15px; margin-bottom: 15px; position: relative; background: #fff; }
+        .post-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9em; color: #666; }
+        .post-title { font-weight: bold; font-size: 1.1em; color: #24292e; margin-bottom: 8px; }
+        .post-content { white-space: pre-wrap; color: #444; }
+        .delete-btn { background: #cf222e; padding: 4px 8px; font-size: 0.8em; margin-left: 10px; }
+        .delete-btn:hover { background: #a40e26; }
     </style>
 </head>
 <body>
 
-    <h1 onclick="showListView()">Wiki Board</h1>
-    <p class="sub-text">🔒 Staff only</p>
-    
-    <div class="info-bar">
-        <span id="status">데이터를 불러오는 중...</span>
-        <span id="count-display">글 0개</span>
-    </div>
+    <h2>🔥 Firebase 실시간 게시판</h2>
 
-    <!-- 1. 목록 화면 -->
-    <div id="list-view" class="view-section active">
-        <div id="posts-list">등록된 글이 없습니다.</div>
-        <button class="btn btn-primary btn-block" style="margin-top: 20px;" onclick="showFormView(false)">✏️ 새 글 작성하기</button>
-    </div>
-
-    <!-- 2. 상세 화면 -->
-    <div id="detail-view" class="view-section">
-        <div id="detail-title" class="detail-title">제목</div>
-        <div id="detail-date" style="font-size:13px; color:#888;">날짜</div>
-        <div id="detail-content" class="detail-content">내용</div>
-        <div class="btn-group">
-            <button class="btn btn-primary" onclick="handleEditRequest()">수정</button>
-            <button class="btn btn-danger" onclick="handleDeleteRequest()">삭제</button>
-            <button class="btn btn-secondary" onclick="showListView()">목록으로</button>
+    <!-- 글 작성 폼 -->
+    <div class="form-box">
+        <div class="input-row">
+            <input type="text" id="nickname" placeholder="닉네임" style="width: 50%;">
+            <input type="password" id="password" placeholder="비밀번호(삭제용)" style="width: 50%;">
         </div>
+        <input type="text" id="title" placeholder="제목을 입력하세요" style="margin-bottom: 10px;">
+        <textarea id="content" rows="4" placeholder="내용을 입력하세요"></textarea>
+        <button onclick="addPost()">글 등록하기</button>
     </div>
 
-    <!-- 3. 입력 양식 화면 -->
-    <div id="form-view" class="view-section">
-        <h2 id="form-title" style="margin-top:0;">새 글 작성</h2>
-        <div class="form-row">
-            <input type="text" id="post-title-input" placeholder="제목을 입력하세요" style="flex: 2;">
-            <input type="password" id="post-pw-input" placeholder="글쓰기 비밀번호 입력" style="flex: 1;">
-        </div>
-        <textarea id="post-content-input" placeholder="내용을 작성하세요..."></textarea>
-        <div class="btn-group">
-            <button class="btn btn-success" onclick="savePost()">저장하기</button>
-            <button class="btn btn-secondary" onclick="cancelForm()">취소</button>
-        </div>
-    </div>
+    <!-- 게시글 목록 -->
+    <div id="post-list">데이터를 불러오는 중...</div>
 
-    <script>
-        const blobUrl = "https://jsonblob.com/api/jsonBlob/019ff025-5fe6-713c-b1e7-810e608f2ce4";
-        
-        let db = { posts: [] }, currentPostId = null, isEditMode = false;  
-        const MASTER_PASSWORD = "24";
+    <!-- Firebase SDK (v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        function navigateTo(id) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
+        // ⚠️ 본인의 Firebase 프로젝트 설정값으로 변경하세요
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTDIB4bPkM55SxHt62DRdQ9YcS2flrlT0",
+            authDomain: "myboard-e1c6a.firebaseapp.com",
+            projectId: "myboard-e1c6a",
+            storageBucket: "myboard-e1c6a.appspot.com",
+            messagingSenderId: "190619665164",
+            appId: "1:190619665164:web:aa9c2bffedc95196423f29"
+        };
 
-        function showListView() { navigateTo('list-view'); renderList(); }
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-        function renderList() {
-            const listEl = document.getElementById('posts-list');
-            document.getElementById('count-display').innerText = `글 ${db.posts.length}개`;
-            if (db.posts.length === 0) {
-                listEl.innerHTML = "<p style='color:#888; text-align:center;'>등록된 글이 없습니다.</p>";
+        // 글 작성 함수
+        window.addPost = async function() {
+            const nickname = document.getElementById('nickname').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+
+            if (!nickname || !password || !title || !content) {
+                alert('모든 항목을 입력해 주세요.');
                 return;
             }
-            const sorted = [...db.posts].reverse();
-            listEl.innerHTML = sorted.map(p => `
-                <div class="post-item" onclick="showDetailView(${p.id})">
-                    <div class="post-title">${escapeHtml(p.title)}</div>
-                    <div class="post-date">${p.updatedAt.substring(0, 10)}</div>
-                </div>
-            `).join('');
-        }
 
-        function showDetailView(id) {
-            currentPostId = id;
-            const p = db.posts.find(x => x.id === id);
-            if (!p) return;
-            document.getElementById('detail-title').innerText = p.title;
-            document.getElementById('detail-date').innerText = `최종 수정: ${p.updatedAt}`;
-            document.getElementById('detail-content').innerText = p.content;
-            navigateTo('detail-view');
-        }
+            try {
+                await addDoc(collection(db, "posts"), {
+                    nickname: nickname,
+                    password: password,
+                    title: title,
+                    content: content,
+                    createdAt: serverTimestamp()
+                });
 
-        function showFormView(edit = false) {
-            isEditMode = edit;
-            const pwIn = document.getElementById('post-pw-input');
-            if (edit) {
-                document.getElementById('form-title').innerText = "글 수정하기";
-                const p = db.posts.find(x => x.id === currentPostId);
-                document.getElementById('post-title-input').value = p.title;
-                document.getElementById('post-content-input').value = p.content;
-                pwIn.style.display = 'none'; 
-            } else {
-                document.getElementById('form-title').innerText = "새 글 작성하기";
-                document.getElementById('post-title-input').value = "";
-                document.getElementById('post-content-input').value = "";
-                pwIn.value = ""; pwIn.style.display = 'block'; 
+                document.getElementById('nickname').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                
+                loadPosts(); // 목록 새로고침
+            } catch (e) {
+                console.error("에러 발생: ", e);
+                alert("글 작성 실패!");
             }
-            navigateTo('form-view');
-        }
+        };
 
-        function cancelForm() { if (isEditMode) showDetailView(currentPostId); else showListView(); }
+        // 글 삭제 함수
+        window.deletePost = async function(id, correctPassword) {
+            const inputPassword = prompt("삭제하려면 작성 시 입력했던 비밀번호를 입력하세요:");
+            if (!inputPassword) return;
 
-        function handleEditRequest() {
-            const p = db.posts.find(x => x.id === currentPostId);
-            if (!p) return;
-            const inputPw = prompt("수정 비밀번호를 입력하세요:");
-            if (inputPw === null) return;
-            if (inputPw === MASTER_PASSWORD) showFormView(true);
-            else alert("비밀번호가 일치하지 않습니다.");
-        }
-
-        function handleDeleteRequest() {
-            const p = db.posts.find(x => x.id === currentPostId);
-            if (!p) return;
-            const inputPw = prompt("삭제 비밀번호를 입력하세요:");
-            if (inputPw === null) return;
-            if (inputPw === MASTER_PASSWORD) {
-                if (confirm("정말 삭제하시겠습니까?")) {
-                    db.posts = db.posts.filter(x => x.id !== currentPostId);
-                    updateServer(true);
+            if (inputPassword === correctPassword) {
+                try {
+                    await deleteDoc(doc(db, "posts", id));
+                    alert("게시글이 삭제되었습니다.");
+                    loadPosts();
+                } catch (e) {
+                    alert("삭제 실패!");
                 }
-            } else alert("비밀번호가 일치하지 않습니다.");
-        }
-
-        // 🛠️ 페이지 구동 시작점 함수 수정
-        function checkAuthAndLoad() {
-            const inputPw = prompt("게시판에 접근하려면 마스터 비밀번호를 입력하세요:");
-            
-            if (inputPw === MASTER_PASSWORD) {
-                // 비밀번호가 맞으면 숨겨진 전체 화면(body)을 노출하고 데이터를 로드합니다.
-                document.body.style.display = "block";
-                loadBoard();
             } else {
-                alert("비밀번호가 틀렸습니다. 접근 권한이 없습니다.");
-                // 화면을 계속 숨겨두거나 빈 안내 메시지만 띄웁니다.
-                document.write("<p style='text-align:center; margin-top:100px; color:#888; font-family:sans-serif;'>접근 권한이 없습니다. 페이지를 새로고침하여 다시 시도하세요.</p>");
+                alert("비밀번호가 일치하지 않습니다.");
+            }
+        };
+
+        // 글 목록 불러오기 함수
+        async function loadPosts() {
+            const listContainer = document.getElementById('post-list');
+            try {
+                const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                listContainer.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    listContainer.innerHTML = '<p style="color:#888;">등록된 게시물이 없습니다.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((docSnapshot) => {
+                    const post = docSnapshot.data();
+                    const postId = docSnapshot.id;
+                    
+                    const dateStr = post.createdAt ? new Date(post.createdAt.toDate()).toLocaleString('ko-KR') : '방금 전';
+
+                    const item = document.createElement('div');
+                    item.className = 'post';
+                    item.innerHTML = `
+                        <div class="post-header">
+                            <span><b>${escapeHtml(post.nickname)}</b></span>
+                            <span>${dateStr} <button class="delete-btn" onclick="deletePost('${postId}', '${post.password}')">삭제</button></span>
+                        </div>
+                        <div class="post-title">${escapeHtml(post.title)}</div>
+                        <div class="post-content">${escapeHtml(post.content)}</div>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            } catch (e) {
+                console.error("불러오기 에러: ", e);
+                listContainer.innerHTML = '<p>게시글을 불러오는 중 오류가 발생했습니다. (Firebase 설정을 확인하세요)</p>';
             }
         }
 
-        function loadBoard() {
-            fetch(blobUrl).then(res => res.json()).then(data => {
-                db = data.posts ? data : { posts: [] };
-                document.getElementById('status').innerText = "조회 완료";
-                showListView();
-            }).catch(() => { document.getElementById('status').innerText = "로드 실패"; });
+        function escapeHtml(text) {
+            return text ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
         }
 
-        function savePost() {
-            const t = document.getElementById('post-title-input').value.trim();
-            const c = document.getElementById('post-content-input').value;
-            const pw = document.getElementById('post-pw-input').value.trim();
-            if (!t) { alert("제목을 입력해 주세요."); return; }
-            if (!isEditMode && pw !== MASTER_PASSWORD) { alert("올바른 글쓰기 비밀번호가 아닙니다."); return; }
-            const now = new Date();
-            const ts = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-            if (isEditMode) {
-                const p = db.posts.find(x => x.id === currentPostId);
-                if (p) { p.title = t; p.content = c; p.updatedAt = ts; }
-            } else {
-                const newId = db.posts.length > 0 ? Math.max(...db.posts.map(p => p.id)) + 1 : 1;
-                db.posts.push({ id: newId, title: t, content: c, password: MASTER_PASSWORD, updatedAt: ts });
-                currentPostId = newId;
-            }
-            updateServer();
-        }
-
-        function updateServer(isDel = false) {
-            document.getElementById('status').innerText = "저장 중...";
-            fetch(blobUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(db)
-            }).then(res => {
-                if (res.ok) {
-                    document.getElementById('status').innerText = "저장 성공";
-                    if (isDel) showListView(); else showDetailView(currentPostId);
-                } else alert("서버 저장 실패");
-            }).catch(err => console.error(err));
-        }
-
-        function escapeHtml(text) { 
-            return text
-                .replace(/&/g, "&")
-                .replace(/</g, "<")
-                .replace(/>/g, ">");
-        }
-
-        // 🛠️ 온로드 시 비밀번호 입력 체크 먼저 실행
-        window.onload = checkAuthAndLoad;
+        // 페이지 로드 시 목록 불러오기
+        loadPosts();
     </script>
 </body>
 </html>
